@@ -1,41 +1,43 @@
+`timescale 1ns/1ps
 `include "src/top.sv"
-`timescale 1ns/1ps         // Set tick to 1ns. Set sim resolution to 1ps.
-
-/**
- * Note:
- *  The TB below is only an example of a testbench written in SV.
- *  Adapt this for your lab assignments as you see fit.
- *  An example clk signal has been added to show what a signal decl and usage looks like.
- *     You are welcome to delete the clk signal if it's not needed.
- *     For instance, purely combinational circuits do not need clks.
- *     So for labs without sequential elements, you can remove them.
- */
 
 module top_tb;
 
-/** declare tb signals below */
-logic clk_tb;
+logic clk, btn_red, btn_blue, sw;
+logic [6:0] seg;
+logic dp;
+logic led_red, led_blue;
 
-/** declare module(s) below */
-top dut                    // declare an inst of top called "dut" (device under test)
-(
-    /** hook up tb signals to dut signals */
-    .clk(clk_tb)           // connect dut's clk wire to clk_tb
-);
+top dut (.*);
 
-localparam CLK_PERIOD = /** clk period */;
-always #(CLK_PERIOD/2) clk_tb=~clk_tb;          // toggle clk_tb every #(CLK_PERIOD/2) ticks
+always #20 clk = ~clk;
 
 initial begin
-    $dumpfile("build/top.vcd"); // intermediate file for waveform generation
-    $dumpvars(0, top_tb);       // capture all signals under top_tb
+    $dumpfile("build/ex7.vcd"); // intermediate file for waveform generation
+    $dumpvars;                  // capture all signals under top_tb
+    clk = 0; btn_red = 0; btn_blue = 0; sw = 0;
+    
+    #1000000 btn_red = 1;
+    #50000000;
+    btn_red = 0;
+    #50000000;
+    
+    sw = 1;
+    #1000000;
+    
+    btn_blue = 1;
+    #50000000;
+    btn_blue = 0;
+    #50000000;
+    
+    $finish;
 end
 
-initial begin
-    /** testbench logic goes below */
-    clk_tb<=1'b1;       // sets clk_tb to 1
-    #(CLK_PERIOD*3);    // waits for CLK_PERIOD * 3 ticks
-    $finish;            // end simulation, otherwise it runs indefinitely
+always @(posedge clk) begin
+    if (dut.btn_red_out)
+        $display("Time=%0t: Red duty_cycle=%d, sw=%b, display=%d, dp=%b", $time, dut.duty_cycle_red, sw, dut.display_value, dp);
+    if (dut.btn_blue_out)
+        $display("Time=%0t: Blue duty_cycle=%d, sw=%b, display=%d, dp=%b", $time, dut.duty_cycle_blue, sw, dut.display_value, dp);
 end
 
 endmodule
